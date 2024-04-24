@@ -35,9 +35,15 @@ AnyshaderState *anyshader_init(const char *filename, Texture2D texture) {
 }
 
 void anyshader_next_file(AnyshaderState *state) {
-	const int next_index = state->file_index + 1;
+	int next_index = state->file_index + 1;
 	const char *filepath = _anyshader_filename(state->filename, next_index);
-	state->file_index = FileExists(filepath) ? next_index : 0;
+	next_index = FileExists(filepath) ? next_index : 0;
+
+	if (next_index == state->file_index) {
+		return;
+	}
+
+	state->file_index = next_index;
 
   UnloadShader(state->ar_shader.shader);
 	anyshader_load(state);
