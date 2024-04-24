@@ -1,6 +1,7 @@
 // @tynroar
 
 #include "noise_tex.h"
+#include "anyshader.h"
 #include "root.h"
 #include <raylib.h>
 
@@ -12,10 +13,6 @@ static const int VIEWPORT_H = 0x1c2;
 static int viewport_w = VIEWPORT_W;
 static int viewport_h = VIEWPORT_H;
 
-typedef enum SHOWCASE_MODES {
-  SHOWCASE_MODE_ROOT = 0,
-  __SHOWCASE_MODES_COUNT
-} SHOWCASE_MODES;
 
 typedef enum NOISETEK_MODES {
   NOISETEK_MODE_FULLSCREEN = 0,
@@ -25,8 +22,10 @@ typedef enum NOISETEK_MODES {
   __NOISETEK_MODES_COUNT
 } NOISETEK_MODES;
 
-NoiseTexState *noisetex_state = NULL;
-SHOWCASE_MODES showcase_mode = SHOWCASE_MODE_ROOT;
+int active_case = 0;
+#define ANYSHADERS_TOTAL 1
+AnyshaderState *anyshaders[ANYSHADERS_TOTAL];
+AnyshaderState *noisetex_state = NULL;
 NOISETEK_MODES noisetek_mode = NOISETEK_MODE_FULLSCREEN;
 
 #if defined(PLATFORM_WEB)
@@ -39,44 +38,54 @@ bool _draw_help = true;
 
 // ---
 
+void anyshader_draw(AnyshaderState *state, NOISETEK_MODES mode, bool flip_h) {
+    Texture2D *rtt = &state->render_texture.texture;
+    float w = rtt->width;
+    float h = rtt->height;
+    Rectangle rsource = {0.0, 0.0, rtt->width, rtt->height};
+    Rectangle rdest = rsource;
+
+		if (flip_h) {
+			rsource.height *= -1;
+		}
+    if (mode == NOISETEK_MODE_THUMBNAIL) {
+      rdest = (Rectangle){8.0, 8.0, w / 2 - 8.0, h / 2 - 8.0};
+    }
+    DrawTexturePro(*rtt, rsource, rdest, (Vector2){0.0, 0.0}, 0.0, WHITE);
+}
+
 void draw() {
   ClearBackground(BLACK);
 
   // Do not update noise in SUSTEND
   if (noisetek_mode != NOISETEK_MODE_SUSPEND) {
-    noisetex_step(noisetex_state);
+    anyshader_step(noisetex_state);
   }
 
+	// draw any shaders
   if (noisetek_mode != NOISETEK_MODE_FULLSCREEN) {
-    switch (showcase_mode) {
-    default:
-    case SHOWCASE_MODE_ROOT:
-      break;
-    }
+		AnyshaderState *state = anyshaders[active_case];
+		anyshader_step(state);
+		anyshader_draw(state, NOISETEK_MODE_FULLSCREEN, false);
   }
 
   // Draw noise at screen in fullscreen and thumbnail modes
   if (noisetek_mode == NOISETEK_MODE_THUMBNAIL ||
       noisetek_mode == NOISETEK_MODE_FULLSCREEN) {
-    Texture2D *rtt = &noisetex_state->render_texture.texture;
-    float w = rtt->width;
-    float h = rtt->height;
-    Rectangle rsource = {0.0, 0.0, rtt->width, rtt->height};
-    Rectangle rdest = rsource;
-    if (noisetek_mode == NOISETEK_MODE_THUMBNAIL) {
-      rdest = (Rectangle){8.0, 8.0, w / 2 - 8.0, h / 2 - 8.0};
-    }
-    DrawTexturePro(*rtt, rsource, rdest, (Vector2){0.0, 0.0}, 0.0, WHITE);
+		anyshader_draw(noisetex_state, noisetek_mode, true);
   }
 }
 
-void dispose() { noisetex_dispose(noisetex_state); }
+void dispose() { anyshader_dispose(noisetex_state); }
 
 void init() {
   dispose();
 
-  // lvl 0
-  noisetex_state = noisetex_init();
+	const int w = viewport_w;
+	const int h = viewport_h;
+	Texture2D noisetex = NoiseTexGenerate(w, h);
+  noisetex_state = anyshader_init("noisetex", noisetex);
+	anyshaders[0] = anyshader_init("anyshader", noisetex_state->render_texture.texture);
 }
 
 void inputs() {
@@ -84,10 +93,10 @@ void inputs() {
     _draw_help = !_draw_help;
   }
   if (IsKeyPressed(KEY_R)) {
-    showcase_mode = (showcase_mode + 1) % __SHOWCASE_MODES_COUNT;
+		active_case = (active_case + 1) % ANYSHADERS_TOTAL;
   }
   if (IsKeyPressed(KEY_N)) {
-		noisetex_next_file(noisetex_state);
+		anyshader_next_file(noisetex_state);
 	}
 
   if (IsKeyPressed(KEY_ONE)) {
@@ -141,6 +150,7 @@ void draw_help_text() {
   const int fontsize = 20;
   const char *msg1 = "[H]elp toggle";
   const char *msg2 = "[R]otate cases";
+  const char *msg2a = "[S]ubrotate cases";
   const char *msg_a0 = "[N]oisetek mode:";
   const char *msg3 = "[1] fullscreen";
   const char *msg4 = "[2] thumbnail";
