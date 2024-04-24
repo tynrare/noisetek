@@ -2,6 +2,9 @@
 #include "root.h"
 #include <raylib.h>
 
+static const char *shader_file_path = RES_PATH "noisetex%d.fs";
+
+
 Texture2D NoiseTexGenerate(int width, int height) {
   int w = width;
   int h = height;
@@ -26,24 +29,41 @@ Texture2D NoiseTexGenerate(int width, int height) {
   return texture;
 }
 
+static void noisetex_load_shader(NoiseTexState *state) {
+	const int file_index = state->file_index;
+	const char *filepath = TextFormat(shader_file_path, file_index);
+  shader_ar_init(&state->ar_shader, filepath);
+}
+
 NoiseTexState *noisetex_init() {
   NoiseTexState *state = MemAlloc(sizeof(NoiseTexState));
 
-  shader_ar_init(&state->ar_shader, RES_PATH "noisetex0.fs");
 
   state->render_texture =
       LoadRenderTexture(GetScreenWidth(), GetScreenHeight());
-  state->scale = 1.0;
-
   state->texture = NoiseTexGenerate(GetScreenWidth(), GetScreenHeight());
+
+	state->file_index = 0;
+	noisetex_load_shader(state);
+
+	noisetex_step(state);
 
   return state;
 }
 
+void noisetex_next_file(NoiseTexState *state) {
+	const int next_index = state->file_index + 1;
+	const char *filepath = TextFormat(shader_file_path, next_index);
+	state->file_index = FileExists(filepath) ? next_index : 0;
+
+  UnloadShader(state->ar_shader.shader);
+	noisetex_load_shader(state);
+}
+
 void noisetex_step(NoiseTexState *state) {
   shader_ar_step(&state->ar_shader);
-  state->scale += GetMouseWheelMove();
 
+	BeginTextureMode(state->render_texture);
   BeginShaderMode(state->ar_shader.shader);
 		// squire mode
 		// Rectangle rec = {0, 0, GetScreenHeight(), GetScreenHeight()};
@@ -53,6 +73,7 @@ void noisetex_step(NoiseTexState *state) {
 		Vector2 pos = {0, 0};
 		DrawTextureRec(state->texture, rec, pos, WHITE);
   EndShaderMode();
+	EndTextureMode();
 }
 
 void noisetex_dispose(NoiseTexState *state) {

@@ -2,7 +2,7 @@
 
 testin' shader features here
 
-[web demo](https://tynroar-noisetek.netlify.app/)
+[web demo](https://noisetek.netlify.app/)
 
 # build
 
