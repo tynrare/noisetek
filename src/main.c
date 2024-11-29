@@ -57,12 +57,12 @@ void draw() {
 
     // suspended states do not require update
     if (state->mode != ANYSHADER_MODE_SUSPEND) {
-      anyshader_step(state);
+      anyshader_step(state, state->texture);
     }
 
     // do not render further if state requested fullscreen
     if (state->mode == ANYSHADER_MODE_FULLSCREEN) {
-      anyshader_draw(state, !(i % 2), i);
+      anyshader_draw(state, (i % 2), i);
       break;
     }
   }
@@ -78,7 +78,7 @@ void draw() {
     }
 
     if (state->mode == ANYSHADER_MODE_THUMBNAIL) {
-      anyshader_draw(state, !(i % 2), i);
+      anyshader_draw(state, (i % 2), i);
     }
   }
 }
@@ -95,11 +95,14 @@ void init() {
   const int w = viewport_w;
   const int h = viewport_h;
   Texture2D noisetex = NoiseTexGenerate(w, h);
-  anyshaders[0] = anyshader_init("noisetex", noisetex);
+  anyshaders[0] = anyshader_init("noisetex");
+  anyshader_step(anyshaders[0], noisetex);
   for (int i = 1; i < anyshaders_pipe_length; i++) {
     const char *name = anyshaders_pipe[i];
     const Texture2D texture = anyshaders[i - 1]->render_texture.texture;
-    anyshaders[i] = anyshader_init(name, texture);
+    AnyshaderState *anss = anyshader_init(name);
+    anyshaders[i] = anss;
+	anyshader_step(anss, texture);
   }
 }
 
@@ -117,6 +120,9 @@ static void _toggle_thumbs(bool hide) {
 }
 
 void inputs() {
+  if (IsKeyPressed(KEY_R)) {
+    init();
+  }
   if (IsKeyPressed(KEY_H)) {
     _draw_help = !_draw_help;
   }
@@ -209,6 +215,7 @@ void draw_help_text() {
     const char *msg3 = "[A]: All toggle";
     const char *msg4 = "[N]: Cycle pipe";
     const char *msg5 = "[X]: Cycle file";
+    const char *msg6 = "[R]: Reset";
     DrawRectangle(4, 4, 200, 200, Fade(BLACK, 0.7));
     DrawText(msg0, 8, 8, fontsize, WHITE);
     DrawText(msg1, 8, 8 + (fontsize + 4) * 1, fontsize, WHITE);
@@ -216,6 +223,7 @@ void draw_help_text() {
     DrawText(msg3, 8, 8 + (fontsize + 4) * 3, fontsize, WHITE);
     DrawText(msg4, 8, 8 + (fontsize + 4) * 4, fontsize, WHITE);
     DrawText(msg5, 8, 8 + (fontsize + 4) * 5, fontsize, WHITE);
+    DrawText(msg6, 8, 8 + (fontsize + 4) * 6, fontsize, WHITE);
   }
 
   if (_draw_stack) {

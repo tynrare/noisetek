@@ -28,9 +28,9 @@ typedef struct AnyshaderState {
 	int file_index;
 } AnyshaderState;
 
-AnyshaderState *anyshader_init(const char *filename, Texture2D texture);
+AnyshaderState *anyshader_init(const char *filename);
 void anyshader_next_file(AnyshaderState *state);
-void anyshader_step(AnyshaderState *state);
+void anyshader_step(AnyshaderState *state, Texture2D texture);
 void anyshader_dispose(AnyshaderState *state);
 
 #endif

@@ -20,24 +20,7 @@ mat2 rotate(float angle) {
 }
 
 vec4 noisetex0(vec2 uv) {
-	vec2 uvd = uv;
-
-	vec4 t0 = texture2D(texture0, fract(uv));
-	return t0;
-
-/*
-	float xf = sin(abs(uvd.x) * 100.0);
-	uvd.x =  pow(uvd.x, xf * 0.1);
-	float yf = abs(uvd.y);
-	//uvd.y =  pow(uvd.y, yf * 0.1);
-
-	uv.x += t0.r * uvd.x;
-	uv.y += t0.g * uvd.y;
-	
-	return vec4(uvd.x, 0.0, 0.0, 1.0);
-	//vec4 t1 = texture2D(texture0, fract(uv));
-	//return t1;
-	*/
+	return texture2D(texture0, fract(uv));
 }
 
 vec4 noisetex1(vec2 uv, float t) {
@@ -59,9 +42,13 @@ float cross(vec2 uv, float width)  {
 
 vec2 rotate_uv_center( vec2 uv , float rotation) {
 	vec2 center = vec2(0.5, 0.5);
+	//float sf = resolution.x / resolution.y;
+
 	uv -= center; // shifting into center
+	//uv.x *= sf; // making rotation round
 	uv *= rotate(rotation);
 
+	//uv.x /= sf; // making coords square
 	uv += center;
 	return uv;
 }
@@ -77,23 +64,13 @@ vec4 pattern0( vec2 uv ) {
 	return noisetex1(uv, elapsed);
 }
 
-float scale = 1.0;
-float xcenter = 512.0;
-float ycenter = 512.0;
 void main() {
 	vec2 uv = fragTexCoord;
-	uv.y = 1.0 - uv.y;
-
-	vec4 p = texture2D(texture0, fract(uv));
-	vec4 color = p;
-	gl_FragColor = color;
-	//uv += vec2(0.5, 0.5);
-	//uv /= scale;
-	//uv.x -= xcenter / resolution.x;
-	//uv.y -= ycenter / resolution.y;
+	uv -= vec2(0.5, 0.5);
+	uv.x += 512.0 / resolution.x;
+	uv.y += 512.0 / resolution.y;
 	//vec2 uvr = uv * rotate(elapsed * 0.01);
-	//vec2 uvr = rotate_uv_center(uv, elapsed * 0.1);
-	//vec2 uvr = uv;
+	vec2 uvr = rotate_uv_center(uv, elapsed * 0.1);
 
-	//gl_FragColor = noisetex0(uvr) * fragColor;
+	gl_FragColor = noisetex0(uvr) * fragColor;
 }
