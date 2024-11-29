@@ -95,7 +95,7 @@ vec4 pattern1( vec2 uv, float t, float scale) {
 }
 
 vec4 pattern2( vec2 uv ) {
-	float scale = 10.0;
+	float scale = 5.0;
 	float sf = resolution.x / resolution.y;
 	vec2 uv_fract = fract(uv * scale);
 	vec2 uv_scaled = ceil(uv * scale) / scale;

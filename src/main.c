@@ -8,8 +8,8 @@
 
 bool active = false;
 
-static const int VIEWPORT_W = 0x320;
-static const int VIEWPORT_H = 0x1c2;
+static const int VIEWPORT_W = 1024;
+static const int VIEWPORT_H = 1024;
 
 static int viewport_w = VIEWPORT_W;
 static int viewport_h = VIEWPORT_H;

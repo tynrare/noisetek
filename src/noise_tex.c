@@ -2,10 +2,13 @@
 #include "root.h"
 #include <raylib.h>
 
+#define LOAD_SSAA_NOISE
+
 
 Texture2D NoiseTexGenerate(int width, int height) {
   int w = width;
   int h = height;
+#ifndef LOAD_SSAA_NOISE
   Color *pixels = (Color *)MemAlloc(w * h * sizeof(Color));
 
   for (int x = 0; x < w * h; x += 1) {
@@ -23,6 +26,9 @@ Texture2D NoiseTexGenerate(int width, int height) {
                  .mipmaps = 1};
   Texture2D texture = LoadTextureFromImage(image);
   UnloadImage(image); // Unload CPU (RAM) image data (pixels)
+#else
+  Texture2D texture = LoadTexture(RES_PATH "saa.png");
+#endif
 
   return texture;
 }

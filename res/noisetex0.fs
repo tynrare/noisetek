@@ -42,14 +42,14 @@ float cross(vec2 uv, float width)  {
 
 vec2 rotate_uv_center( vec2 uv , float rotation) {
 	vec2 center = vec2(0.5, 0.5);
-	float sf = resolution.x / resolution.y;
+	//float sf = resolution.x / resolution.y;
 
 	uv -= center; // shifting into center
-	uv.x *= sf; // making rotation round
+	//uv.x *= sf; // making rotation round
 	uv *= rotate(rotation);
 
-	uv.x /= sf; // making coords square
-
+	//uv.x /= sf; // making coords square
+	uv += center;
 	return uv;
 }
 
@@ -66,5 +66,11 @@ vec4 pattern0( vec2 uv ) {
 
 void main() {
 	vec2 uv = fragTexCoord;
-	gl_FragColor = pattern0(uv) * fragColor;
+	uv -= vec2(0.5, 0.5);
+	uv.x += 512.0 / resolution.x;
+	uv.y += 512.0 / resolution.y;
+	//vec2 uvr = uv * rotate(elapsed * 0.01);
+	vec2 uvr = rotate_uv_center(uv, elapsed * 0.1);
+
+	gl_FragColor = noisetex0(uvr) * fragColor;
 }
